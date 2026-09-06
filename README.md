@@ -191,8 +191,8 @@ test/
   harness.js    loads the .gs files into one shared scope, like Apps Script
   *.test.js     27 tests, no network
   live-gemini.js  the real model, run by hand
-  build-demo.js   rebuilds demo/ from the same code
-demo/           what GitHub Pages serves
+  build-demo.js   rebuilds docs/ from the same code
+docs/           what GitHub Pages serves
 ```
 
 MIT.

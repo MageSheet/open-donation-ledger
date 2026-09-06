@@ -39,15 +39,15 @@ for (const entry of HISTORY) {
 
 const view = ctx.publicView(asObjects(ctx, sheet.rows), { now: () => new Date('2026-09-06T09:00:00Z') });
 
-fs.mkdirSync(path.join(ROOT, 'demo'), { recursive: true });
-fs.writeFileSync(path.join(ROOT, 'demo', 'data.json'), JSON.stringify(view, null, 2));
+fs.mkdirSync(path.join(ROOT, 'docs'), { recursive: true });
+fs.writeFileSync(path.join(ROOT, 'docs', 'data.json'), JSON.stringify(view, null, 2));
 
 const page = fs.readFileSync(path.join(ROOT, 'apps-script', 'Page.html'), 'utf8');
 if (!page.includes('var DATA = <?= data ?>;')) {
   throw new Error('Page.html no longer has the template tag the demo swaps out');
 }
 fs.writeFileSync(
-  path.join(ROOT, 'demo', 'index.html'),
+  path.join(ROOT, 'docs', 'index.html'),
   page
     .replace(
       'var DATA = <?= data ?>;',
@@ -64,6 +64,6 @@ fs.writeFileSync(
     )
 );
 
-console.log(`demo/data.json and demo/index.html written`);
+console.log(`docs/data.json and docs/index.html written`);
 console.log(`${HISTORY.length} entries in, ${sheet.rows.length} rows recorded, ${duplicates} duplicate rejected`);
 console.log(`totals: ${JSON.stringify(view.raised)} raised, ${JSON.stringify(view.spent)} spent, ${view.pendingReview} pending`);
