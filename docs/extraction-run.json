@@ -1,0 +1,146 @@
+{
+  "model": "gemini-3.6-flash",
+  "temperature": 0,
+  "ranAt": "2026-09-06T12:26:20.107Z",
+  "prompt": "Read this message from a charity donor and extract the donation.\nCopy amount_quote character for character out of the message. Do not tidy it, do not convert it, do not translate it. If the message states no amount, return amount 0 and an empty amount_quote.\n\nMessage:\n",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "amount": {
+        "type": "number"
+      },
+      "currency": {
+        "type": "string",
+        "description": "ISO 4217, e.g. TRY, EUR, USD"
+      },
+      "donor": {
+        "type": "string",
+        "description": "name as written, or empty if none given"
+      },
+      "purpose": {
+        "type": "string",
+        "description": "what the donation is earmarked for, or empty"
+      },
+      "anonymous": {
+        "type": "boolean",
+        "description": "true if the sender asked not to be named"
+      },
+      "amount_quote": {
+        "type": "string",
+        "description": "the exact characters from the input that state the amount, copied verbatim"
+      }
+    },
+    "required": [
+      "amount",
+      "currency",
+      "amount_quote"
+    ]
+  },
+  "retries": 3,
+  "posted": 5,
+  "total": 6,
+  "runs": [
+    {
+      "message": "abi 250 tl yolladım montlara yazın",
+      "why": "Ordinary case, lowercase currency, written the way people actually type.",
+      "read": {
+        "amount": 250,
+        "currency": "TRY",
+        "amount_quote": "250 tl",
+        "anonymous": false,
+        "donor": "",
+        "purpose": "montlara"
+      },
+      "verdict": {
+        "ok": true,
+        "reason": ""
+      },
+      "quoteAt": 4
+    },
+    {
+      "message": "Sending 40 EUR for the winter fund, please keep me anonymous",
+      "why": "Names a currency that is not the local one, and asks to stay unnamed.",
+      "read": {
+        "amount": 40,
+        "currency": "EUR",
+        "amount_quote": "40 EUR",
+        "anonymous": true,
+        "donor": "",
+        "purpose": "winter fund"
+      },
+      "verdict": {
+        "ok": true,
+        "reason": ""
+      },
+      "quoteAt": 8
+    },
+    {
+      "message": "bugün 1.250,50 TL havale ettim, dekontu sonra atarım",
+      "why": "European decimal comma with a thousands dot: 1.250,50 is not 1.25.",
+      "read": {
+        "amount": 1250.5,
+        "currency": "TRY",
+        "amount_quote": "1.250,50 TL",
+        "anonymous": false,
+        "donor": "",
+        "purpose": ""
+      },
+      "verdict": {
+        "ok": true,
+        "reason": ""
+      },
+      "quoteAt": 6
+    },
+    {
+      "message": "Ben Ayşe, çocuklara kırtasiye için 500 lira gönderdim",
+      "why": "Names the donor inside the sentence, and writes the currency as a word.",
+      "read": {
+        "amount": 500,
+        "currency": "TRY",
+        "amount_quote": "500 lira",
+        "anonymous": false,
+        "donor": "Ayşe",
+        "purpose": "çocuklara kırtasiye"
+      },
+      "verdict": {
+        "ok": true,
+        "reason": ""
+      },
+      "quoteAt": 35
+    },
+    {
+      "message": "yarın bir miktar göndereceğim inşallah",
+      "why": "A promise, not a donation. There is no amount to read.",
+      "read": {
+        "amount": 0,
+        "currency": "TRY",
+        "amount_quote": "",
+        "anonymous": false,
+        "donor": "",
+        "purpose": ""
+      },
+      "verdict": {
+        "ok": false,
+        "reason": "model quoted nothing"
+      },
+      "quoteAt": -1
+    },
+    {
+      "message": "I gave 100 dollars last week, that is about 3400 lira right?",
+      "why": "Two numbers, one of them a conversion the sender did in their head.",
+      "read": {
+        "amount": 100,
+        "currency": "USD",
+        "amount_quote": "100 dollars",
+        "anonymous": false,
+        "donor": "",
+        "purpose": ""
+      },
+      "verdict": {
+        "ok": true,
+        "reason": ""
+      },
+      "quoteAt": 7
+    }
+  ]
+}

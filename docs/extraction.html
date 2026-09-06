@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What the model read, and whether it was allowed to count</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231F5F4B'/%3E%3Cpath d='M8 21h4V11H8zm6 0h4V7h-4zm6 0h4v-6h-4z' fill='%23fff'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --ground:#FBFAF8; --card:#FFFFFF; --ink:#1A1A18; --muted:#6B6A66;
+    --line:#E4E2DC; --accent:#1F5F4B; --accent-soft:#E4F0EA;
+    --warn:#8A5A12; --warn-soft:#FAF0DD; --mark:#FFE9A8; --mark-ink:#4A3A08;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --ground:#14150F; --card:#1D1E18; --ink:#F0EEE6; --muted:#A3A197;
+            --line:#2E2F27; --accent:#7FC9AC; --accent-soft:#1B2E27;
+            --warn:#D9A857; --warn-soft:#2E2312; --mark:#5C4A14; --mark-ink:#FFE9A8; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--ground); color:var(--ink);
+         font:16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width:52rem; margin:0 auto; padding:2.5rem 1.25rem 4rem; }
+  h1 { font-size:1.9rem; line-height:1.15; margin:0 0 .5rem; letter-spacing:-.02em; }
+  .sub { color:var(--muted); margin:0 0 1.25rem; max-width:44rem; }
+  .meta { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:.8rem;
+          color:var(--muted); margin:0 0 2rem; }
+  h2 { font-size:1.05rem; margin:2.25rem 0 .75rem; }
+
+  .msgs { display:flex; flex-direction:column; gap:.5rem; }
+  button.msg { all:unset; cursor:pointer; display:grid; grid-template-columns:1fr auto;
+               gap:.75rem; align-items:center; background:var(--card);
+               border:1px solid var(--line); border-radius:9px; padding:.7rem .9rem; }
+  button.msg:hover { border-color:var(--accent); }
+  button.msg:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  button.msg[aria-pressed="true"] { border-color:var(--accent); background:var(--accent-soft); }
+  button.msg .t { font-size:.95rem; }
+  .chip { font-family:ui-monospace, monospace; font-size:.68rem; font-weight:700;
+          letter-spacing:.05em; padding:.2rem .45rem; border-radius:5px; white-space:nowrap; }
+  .chip.ok { background:var(--accent-soft); color:var(--accent); }
+  .chip.no { background:var(--warn-soft); color:var(--warn); }
+
+  .panel { margin-top:1.25rem; background:var(--card); border:1px solid var(--line);
+           border-radius:11px; padding:1.35rem 1.4rem; }
+  .why { color:var(--muted); font-size:.9rem; margin:0 0 1.1rem; }
+  .label { font-size:.72rem; text-transform:uppercase; letter-spacing:.07em;
+           color:var(--muted); font-weight:700; margin:1.15rem 0 .4rem; }
+  .label:first-of-type { margin-top:0; }
+  .quoted { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:.95rem;
+            background:var(--ground); border:1px solid var(--line); border-radius:7px;
+            padding:.7rem .8rem; overflow-x:auto; white-space:pre-wrap; word-break:break-word; }
+  mark { background:var(--mark); color:var(--mark-ink); border-radius:3px; padding:0 .12em; }
+  dl { display:grid; grid-template-columns:auto 1fr; gap:.35rem 1rem; margin:0; font-size:.93rem; }
+  dt { color:var(--muted); }
+  dd { margin:0; font-family:ui-monospace, monospace; }
+  ol.checks { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.5rem; }
+  ol.checks li { display:grid; grid-template-columns:1.5rem 1fr; gap:.5rem; align-items:start;
+                 font-size:.93rem; }
+  ol.checks .s { font-weight:700; }
+  ol.checks .s.ok { color:var(--accent); }
+  ol.checks .s.no { color:var(--warn); }
+  ol.checks .s.skip { color:var(--muted); }
+  .verdict { margin-top:1.15rem; padding:.85rem 1rem; border-radius:8px; font-size:.94rem; }
+  .verdict.ok { background:var(--accent-soft); color:var(--accent); }
+  .verdict.no { background:var(--warn-soft); color:var(--warn); }
+
+  table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  th,td { text-align:left; padding:.55rem .5rem; border-bottom:1px solid var(--line);
+          vertical-align:top; }
+  th { font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  td.code { font-family:ui-monospace, monospace; }
+  .scroll { overflow-x:auto; }
+  .note { color:var(--muted); font-size:.88rem; }
+  footer { margin-top:2.5rem; padding-top:1.25rem; border-top:1px solid var(--line);
+           color:var(--muted); font-size:.85rem; display:flex; flex-direction:column; gap:.35rem; }
+  a { color:var(--accent); text-underline-offset:2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>What the model read, and whether it was allowed to count</h1>
+  <p class="sub">
+    Every donation below was read by Gemini and then checked before it was allowed near the
+    ledger. Pick a message to see what the model returned, which characters it says it read
+    the amount from, and what the check decided. Nothing here is illustrative: these are
+    recorded replies from a real run.
+  </p>
+  <p class="meta" id="meta"></p>
+
+  <div class="msgs" id="msgs"></div>
+  <div class="panel" id="panel"></div>
+
+  <h2>The failures the model did not happen to produce</h2>
+  <p class="note">
+    A run of six honest messages does not exercise the check. These are the cases the unit
+    tests cover, so the behaviour is pinned whether or not a model ever produces it. They are
+    test fixtures, not model output.
+  </p>
+  <div class="scroll"><table>
+    <thead><tr><th>Message</th><th>Model claims</th><th>Check says</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="code">sending some money for the coats</td>
+        <td class="code">250 TRY<br>quote "250 TRY"</td>
+        <td>Quote does not occur in the message. The model wrote it rather than read it.</td>
+      </tr>
+      <tr>
+        <td class="code">I sent 40 EUR today</td>
+        <td class="code">1400 TRY<br>quote "40 EUR"</td>
+        <td>Quote says 40 but amount says 1400. A conversion the ledger never asked for.</td>
+      </tr>
+      <tr>
+        <td class="code">bagis 1.250 TL</td>
+        <td class="code">1.25 TRY<br>quote "1.250 TL"</td>
+        <td>Three digits after a separator is grouping, not a decimal. The amount is 1250.</td>
+      </tr>
+      <tr>
+        <td class="code">[a blurry receipt photo]</td>
+        <td class="code">read once 1200 TRY<br>read again 120 TRY</td>
+        <td>Two reads disagreed. No quote is possible on an image, so agreement is the check.</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <footer>
+    <div><a href="./">← Back to the public ledger page</a> &nbsp;·&nbsp;
+         <a href="https://github.com/MageSheet/open-donation-ledger">Source on GitHub</a></div>
+    <div id="stamp"></div>
+  </footer>
+</div>
+
+<script>
+  var DATA = null;
+  var selected = 0;
+
+  function el(tag, text, cls) {
+    var e = document.createElement(tag);
+    if (text !== undefined && text !== null) e.textContent = text;
+    if (cls) e.className = cls;
+    return e;
+  }
+
+  /**
+   * Rebuilds the message with the quoted characters wrapped in a mark.
+   * The recorded offset is against the whitespace-normalised message, which is
+   * what the check compares, so the message is normalised the same way here
+   * rather than trusting the offset against the raw string.
+   */
+  function highlighted(message, quote) {
+    var box = el('div', undefined, 'quoted');
+    var norm = message.replace(/\s+/g, ' ');
+    var at = quote ? norm.toLowerCase().indexOf(quote.toLowerCase().replace(/\s+/g, ' ').trim()) : -1;
+    if (at === -1) { box.textContent = norm; return box; }
+    var len = quote.replace(/\s+/g, ' ').trim().length;
+    box.appendChild(document.createTextNode(norm.slice(0, at)));
+    box.appendChild(el('mark', norm.slice(at, at + len)));
+    box.appendChild(document.createTextNode(norm.slice(at + len)));
+    return box;
+  }
+
+  function checkList(run) {
+    var quote = run.read.amount_quote;
+    var ok = run.verdict.ok;
+    var steps = [
+      { label: 'The model returned a quote it says the amount came from.',
+        state: quote ? 'ok' : 'no' },
+      { label: 'That quote occurs in the message, so it was read and not written.',
+        state: !quote ? 'skip' : (run.verdict.reason.indexOf('does not occur') !== -1 ? 'no' : 'ok') },
+      { label: 'The digits inside the quote are the amount the model reported.',
+        state: !quote ? 'skip' : (run.verdict.reason.indexOf('quote says') !== -1 ? 'no' : (ok ? 'ok' : 'skip')) }
+    ];
+    var list = el('ol', undefined, 'checks');
+    steps.forEach(function (s) {
+      var li = el('li');
+      li.appendChild(el('span', s.state === 'ok' ? '✓' : s.state === 'no' ? '✕' : '–', 's ' + s.state));
+      li.appendChild(el('span', s.label));
+      list.appendChild(li);
+    });
+    return list;
+  }
+
+  function renderPanel() {
+    var run = DATA.runs[selected];
+    var panel = document.getElementById('panel');
+    panel.textContent = '';
+
+    panel.appendChild(el('p', run.why, 'why'));
+
+    panel.appendChild(el('div', 'The message, with what the model quoted', 'label'));
+    panel.appendChild(highlighted(run.message, run.read.amount_quote));
+
+    panel.appendChild(el('div', 'What the model returned', 'label'));
+    var dl = el('dl');
+    [['amount', run.read.amount],
+     ['currency', run.read.currency],
+     ['donor', run.read.donor || '(none given)'],
+     ['purpose', run.read.purpose || '(none given)'],
+     ['anonymous', String(!!run.read.anonymous)],
+     ['amount_quote', JSON.stringify(run.read.amount_quote)]].forEach(function (pair) {
+      dl.appendChild(el('dt', pair[0]));
+      dl.appendChild(el('dd', String(pair[1])));
+    });
+    panel.appendChild(dl);
+
+    panel.appendChild(el('div', 'What the check did', 'label'));
+    panel.appendChild(checkList(run));
+
+    var v = el('div', undefined, 'verdict ' + (run.verdict.ok ? 'ok' : 'no'));
+    v.textContent = run.verdict.ok
+      ? 'Posted. The reading is backed by characters that are in the message, so it counts on the public page.'
+      : 'Held for review: ' + run.verdict.reason + '. The row is still recorded, it just counts nowhere until a person checks it.';
+    panel.appendChild(v);
+  }
+
+  function renderList() {
+    var box = document.getElementById('msgs');
+    box.textContent = '';
+    DATA.runs.forEach(function (run, i) {
+      var b = el('button', undefined, 'msg');
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(i === selected));
+      b.appendChild(el('span', run.message, 't'));
+      b.appendChild(el('span', run.verdict.ok ? 'POSTED' : 'REVIEW',
+        'chip ' + (run.verdict.ok ? 'ok' : 'no')));
+      b.addEventListener('click', function () { selected = i; renderList(); renderPanel(); });
+      box.appendChild(b);
+    });
+  }
+
+  fetch('extraction-run.json').then(function (r) { return r.json(); }).then(function (d) {
+    DATA = d;
+    document.getElementById('meta').textContent =
+      d.model + ' · temperature ' + d.temperature + ' · structured output · ' +
+      d.posted + ' of ' + d.total + ' posted · ' + d.retries +
+      ' request' + (d.retries === 1 ? '' : 's') + ' retried after a 503';
+    document.getElementById('stamp').textContent =
+      'Recorded ' + new Date(d.ranAt).toLocaleString() + '. Rerun it yourself with ' +
+      'GEMINI_API_KEY=... node test/live-gemini.js';
+    renderList();
+    renderPanel();
+  });
+</script>
+</body>
+</html>

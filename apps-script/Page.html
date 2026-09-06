@@ -35,7 +35,8 @@
   .pending { background:var(--card); border:1px solid var(--line); border-left:3px solid var(--warn);
              border-radius:8px; padding:.85rem 1rem; color:var(--muted); font-size:.9rem; margin:1.5rem 0; }
   footer { margin-top:2.5rem; padding-top:1.25rem; border-top:1px solid var(--line);
-           color:var(--muted); font-size:.85rem; }
+           color:var(--muted); font-size:.85rem; display:flex; flex-direction:column; gap:.35rem; }
+  footer a { color:var(--accent); text-underline-offset:2px; }
   .scroll { overflow-x:auto; }
 </style>
 </head>
@@ -62,6 +63,7 @@
   <footer>
     <div id="stamp"></div>
     <div>Names appear only where the donor asked to be named. Everyone else is Anonymous, including on receipts.</div>
+    <div><a href="https://magesheet.github.io/open-donation-ledger/extraction.html">How a donation message is read, and what has to be true before it counts &rarr;</a></div>
   </footer>
 </div>
 
