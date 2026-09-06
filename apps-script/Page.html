@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Where the money went</title>
+<style>
+  :root {
+    --ground: #FBFAF8; --card: #FFFFFF; --ink: #1A1A18; --muted: #6B6A66;
+    --line: #E4E2DC; --accent: #1F5F4B; --accent-soft: #E4F0EA; --warn: #8A5A12;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --ground:#14150F; --card:#1D1E18; --ink:#F0EEE6; --muted:#A3A197;
+            --line:#2E2F27; --accent:#7FC9AC; --accent-soft:#1B2E27; --warn:#D9A857; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--ground); color:var(--ink);
+         font:16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 46rem; margin:0 auto; padding: 2.5rem 1.25rem 4rem; }
+  h1 { font-size:1.9rem; line-height:1.15; margin:0 0 .4rem; letter-spacing:-.02em; }
+  .sub { color:var(--muted); margin:0 0 2rem; }
+  .totals { display:grid; grid-template-columns:repeat(auto-fit,minmax(11rem,1fr)); gap:.75rem; margin-bottom:1.5rem; }
+  .t { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:1rem 1.1rem; }
+  .t b { display:block; font-size:1.7rem; letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
+  .t span { color:var(--muted); font-size:.85rem; }
+  h2 { font-size:1.05rem; margin:2rem 0 .75rem; }
+  table { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums; }
+  th, td { text-align:left; padding:.6rem .5rem; border-bottom:1px solid var(--line); }
+  th { font-size:.78rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:600; }
+  td.n { text-align:right; }
+  .bar { height:6px; background:var(--accent-soft); border-radius:3px; overflow:hidden; margin-top:.35rem; }
+  .bar i { display:block; height:100%; background:var(--accent); }
+  .pending { background:var(--card); border:1px solid var(--line); border-left:3px solid var(--warn);
+             border-radius:8px; padding:.85rem 1rem; color:var(--muted); font-size:.9rem; margin:1.5rem 0; }
+  footer { margin-top:2.5rem; padding-top:1.25rem; border-top:1px solid var(--line);
+           color:var(--muted); font-size:.85rem; }
+  .scroll { overflow-x:auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Where the money went</h1>
+  <p class="sub">Every row below came from a donation message or a receipt. Nothing here is edited after the fact: a mistake is fixed by adding a correcting row, and both stay on the record.</p>
+
+  <div class="totals" id="totals"></div>
+  <div id="pending"></div>
+
+  <h2>By purpose</h2>
+  <div class="scroll"><table id="purposes">
+    <thead><tr><th>Fund</th><th class="n">Raised</th><th class="n">Spent</th></tr></thead>
+    <tbody></tbody>
+  </table></div>
+
+  <h2>Recent entries</h2>
+  <div class="scroll"><table id="recent">
+    <thead><tr><th>Day</th><th>From</th><th>For</th><th class="n">Amount</th></tr></thead>
+    <tbody></tbody>
+  </table></div>
+
+  <footer>
+    <div id="stamp"></div>
+    <div>Names appear only where the donor asked to be named. Everyone else is Anonymous, including on receipts.</div>
+  </footer>
+</div>
+
+<script>
+  var DATA = <?= data ?>;
+
+  function money(n, cur) {
+    return new Intl.NumberFormat(undefined, { style: 'currency', currency: cur, maximumFractionDigits: 2 }).format(n);
+  }
+  function el(tag, text, cls) {
+    var e = document.createElement(tag);
+    if (text !== undefined) e.textContent = text;
+    if (cls) e.className = cls;
+    return e;
+  }
+
+  (function render() {
+    var totals = document.getElementById('totals');
+    var currencies = Object.keys(DATA.raised);
+    if (!currencies.length) totals.appendChild(el('p', 'No entries yet.'));
+
+    currencies.forEach(function (cur) {
+      var raised = DATA.raised[cur] || 0, spent = (DATA.spent || {})[cur] || 0;
+      var card = el('div', undefined, 't');
+      card.appendChild(el('b', money(raised, cur)));
+      card.appendChild(el('span', 'raised in ' + cur));
+      var bar = el('div', undefined, 'bar');
+      var fill = el('i');
+      fill.style.width = raised ? Math.min(100, (spent / raised) * 100) + '%' : '0%';
+      bar.appendChild(fill);
+      card.appendChild(bar);
+      card.appendChild(el('span', money(spent, cur) + ' spent so far'));
+      totals.appendChild(card);
+    });
+
+    if (DATA.pendingReview) {
+      var p = el('div', DATA.pendingReview + ' entr' + (DATA.pendingReview === 1 ? 'y is' : 'ies are') +
+        ' waiting for a human to check them. They are not counted in any total on this page.', 'pending');
+      document.getElementById('pending').appendChild(p);
+    }
+
+    var pt = document.querySelector('#purposes tbody');
+    DATA.byPurpose.forEach(function (row) {
+      var tr = el('tr');
+      tr.appendChild(el('td', row.purpose));
+      tr.appendChild(el('td', money(row.raised, row.currency), 'n'));
+      tr.appendChild(el('td', money(row.spent, row.currency), 'n'));
+      pt.appendChild(tr);
+    });
+
+    var rt = document.querySelector('#recent tbody');
+    DATA.recent.forEach(function (r) {
+      var tr = el('tr');
+      tr.appendChild(el('td', r.day));
+      tr.appendChild(el('td', r.name));
+      tr.appendChild(el('td', r.purpose));
+      tr.appendChild(el('td', (r.kind === 'spend' ? '-' : '') + money(r.amount, r.currency), 'n'));
+      rt.appendChild(tr);
+    });
+
+    document.getElementById('stamp').textContent =
+      'Generated ' + new Date(DATA.generatedAt).toLocaleString() + ' from the ledger sheet.';
+  })();
+</script>
+</body>
+</html>

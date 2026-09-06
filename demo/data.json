@@ -1,0 +1,89 @@
+{
+  "generatedAt": "2026-09-06T09:00:00.000Z",
+  "raised": {
+    "TRY": 3040.5,
+    "EUR": 40
+  },
+  "spent": {
+    "TRY": 1370
+  },
+  "byPurpose": [
+    {
+      "purpose": "School supplies",
+      "currency": "TRY",
+      "raised": 2450.5,
+      "spent": 780
+    },
+    {
+      "purpose": "Winter coats",
+      "currency": "EUR",
+      "raised": 40,
+      "spent": 0
+    },
+    {
+      "purpose": "Winter coats",
+      "currency": "TRY",
+      "raised": 590,
+      "spent": 590
+    }
+  ],
+  "pendingReview": 1,
+  "recent": [
+    {
+      "name": "Anonymous",
+      "amount": 1250.5,
+      "currency": "TRY",
+      "purpose": "School supplies",
+      "kind": "donation",
+      "day": "2026-09-06"
+    },
+    {
+      "name": "Stationery shop",
+      "amount": 780,
+      "currency": "TRY",
+      "purpose": "School supplies",
+      "kind": "spend",
+      "day": "2026-09-06"
+    },
+    {
+      "name": "Coat supplier",
+      "amount": 590,
+      "currency": "TRY",
+      "purpose": "Winter coats",
+      "kind": "spend",
+      "day": "2026-09-06"
+    },
+    {
+      "name": "Selim",
+      "amount": 3400,
+      "currency": "TRY",
+      "purpose": "Winter coats",
+      "kind": "donation",
+      "day": "2026-09-06"
+    },
+    {
+      "name": "Anonymous",
+      "amount": 1200,
+      "currency": "TRY",
+      "purpose": "School supplies",
+      "kind": "donation",
+      "day": "2026-09-06"
+    },
+    {
+      "name": "Anonymous",
+      "amount": 40,
+      "currency": "EUR",
+      "purpose": "Winter coats",
+      "kind": "donation",
+      "day": "2026-09-06"
+    },
+    {
+      "name": "Ayşe K.",
+      "amount": 250,
+      "currency": "TRY",
+      "purpose": "Winter coats",
+      "kind": "donation",
+      "day": "2026-09-06"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+{
+  "scriptId": "<the script id from your Apps Script project settings>",
+  "rootDir": "apps-script"
+}
