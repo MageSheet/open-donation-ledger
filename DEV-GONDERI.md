@@ -26,7 +26,7 @@ the question before it is asked.
 
 ## Demo
 
-**[The public page →](https://magesheet.github.io/open-donation-ledger/)**
+**[The public page a donor opens →](https://magesheet.github.io/open-donation-ledger/)**
 
 That page is the deployed page, byte for byte, with one line changed: where the
 Apps Script version writes `<?= data ?>`, the demo fetches the same JSON from a
@@ -38,6 +38,14 @@ the build fails.
 The sample month deliberately includes the things that go wrong: a receipt two
 volunteers forwarded, a donation typed with one zero too many and later
 corrected, and a reading the checks refused to trust.
+
+**[What the model read, and whether it was allowed to count →](https://magesheet.github.io/open-donation-ledger/extraction.html)**
+
+The ledger page shows the result. This one shows the part worth showing. Pick any
+of six real donation messages and it highlights the exact characters Gemini says
+it read the amount from, lists the three checks with their outcomes, and says why
+the row was posted or held. It is fed by a recorded run, not by a description of
+one, down to how many requests had to be retried after a 503.
 
 ## Code
 
